@@ -1,0 +1,24 @@
+name: "Build and Publish Docker Image"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature/cicd"
+      #- "main"
+    paths:
+      - ".github/workflows/build-and-publish.yml"
+      #- "**"
+
+jobs:
+  workflow:
+    uses: chnm/.github/.github/workflows/django--build-publish.yml@main
+    secrets: inherit
+    with:
+      container-registry: "ghcr.io"
+      container-image-name: "lasfera"
+      
+      #django-context-root: "django"
+
+      website-devl-fqdn: "dev.lasfera.rrchnm.org"
+      website-prod-fqdn: "dev.lasfera.rrchnm.org"
