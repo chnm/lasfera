@@ -1,12 +1,10 @@
 # this is a Jinja2 template file used during the Ansible deployment
 # environment specific configuration can be found in our Ansble scripts
 
-version: "3.9"
 services:
   app:
-    build: .
-    image: "rrchnm/lasfera"
-    container_name: "lasfera-app"
+    image: ghcr.io/{{ template.git.package.image_name }}:{{ template.git.package.tag }}
+    container_name: {{ template.name }}_app
     ports:
       - "{{ template.env.host_app_port }}:8000"
     environment:
@@ -19,6 +17,8 @@ services:
       - DB_NAME={{ template.env.db_name }}
       - DB_USER={{ template.env.db_user }}
       - DB_PASSWORD={{ template.env.db_pass }}
+    volumes:
+      - dj-data:/app/media
     depends_on:
       db:
         condition: service_healthy
@@ -26,11 +26,9 @@ services:
       sh -c "poetry run python manage.py migrate --skip-checks &&
       poetry run python manage.py collectstatic --no-input &&
       poetry run python manage.py runserver 0.0.0.0:8000"
-   #volumes:
-     #- dj-data:/app/media
   db:
     image: postgres:12
-    container_name: "lasfera-db"
+    container_name: {{ template.name }}_db
     volumes:
       - pg-data:/var/lib/postgresql/data/
     environment:
@@ -47,8 +45,8 @@ services:
 # external volumes managed and defined by ansible
 volumes:
   dj-data:
-    name: "lasfera-app-vol"
+    name: "{{ template.name }}_app-vol"
     external: true
   pg-data:
-    name: "lasfera-db-vol"
+    name: "{{ template.name }}_db-vol"
     external: true
