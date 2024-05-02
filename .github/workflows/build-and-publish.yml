@@ -4,11 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "feature/cicd"
-      #- "main"
+      - "main"
     paths:
-      - ".github/workflows/build-and-publish.yml"
-      #- "**"
+      - "**"
 
 jobs:
   workflow:
