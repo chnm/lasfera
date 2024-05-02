@@ -18,7 +18,7 @@ jobs:
       container-registry: "ghcr.io"
       container-image-name: "lasfera"
       
-      #django-context-root: "django"
+      django-context-root: "."
 
       website-devl-fqdn: "dev.lasfera.rrchnm.org"
       website-prod-fqdn: "dev.lasfera.rrchnm.org"
