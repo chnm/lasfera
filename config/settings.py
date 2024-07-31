@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "fontawesomefree",
     "tailwind",
     "theme",
     "django_browser_reload",

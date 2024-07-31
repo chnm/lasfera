@@ -25,6 +25,26 @@ def validate_line_number_variant_code(value):
         raise ValidationError('Invalid number format. Expected format: "01.01.04a"')
 
 
+class LineCode(models.Model):
+    code = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Input the text by book, stanza, and line number. For example: 01.01.01 refers to book 1, stanza 1, line 1.",
+        validators=[validate_line_number_code],
+    )
+    associated_iiif_url = models.URLField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="The URL to the IIIF manifest for the manuscript. If there isn't one, leave blank.",
+        verbose_name="Associated IIIF URL",
+    )
+
+    def __str__(self) -> str:
+        return str(self.code)
+
+
 class Library(models.Model):
     """Library or collection that holds a manuscript"""
 
@@ -439,11 +459,11 @@ class StanzaTranslated(models.Model):
     )
 
     def __str__(self) -> str:
-        return str(self.stanza_translation[:100])
+        return str(self.stanza_text[:100])
 
     class Meta:
-        verbose_name = "Stanza Translation"
-        verbose_name_plural = "Stanza Translations"
+        verbose_name = "Stanza translation"
+        verbose_name_plural = "Stanza translations"
 
 
 class Folio(models.Model):
@@ -501,7 +521,9 @@ class SingleManuscript(models.Model):
 
     id = models.AutoField(primary_key=True)
     item_id = models.IntegerField(blank=False, null=False, unique=True)
-    siglum = models.CharField(max_length=20, blank=True, null=True, unique=True)
+    siglum = models.CharField(
+        max_length=20, blank=True, null=True, unique=True, db_index=True
+    )
     shelfmark = models.CharField(max_length=255, blank=True, null=True)
     library = models.ForeignKey(
         Library, on_delete=models.PROTECT, blank=True, null=True
@@ -533,6 +555,11 @@ class SingleManuscript(models.Model):
         help_text="The URL to the digitized manuscript. If there isn't one, leave blank.",
         verbose_name="Digitized URL",
     )
+    photographs = models.FileField(
+        blank=True,
+        null=True,
+        help_text="Upload photographs of the manuscript.",
+    )
 
     provenance = RichTextField(blank=True, null=True)
     manuscript_lost = models.BooleanField(blank=True, null=True, default=False)
@@ -550,6 +577,11 @@ class SingleManuscript(models.Model):
             return self.shelfmark
         else:
             return "Manuscript"
+
+    def has_pdf_or_images(self):
+        if self.photographs:
+            return self.photographs.name.endswith((".pdf", ".jpg", ".jpeg", ".png"))
+        return False
 
 
 class AuthorityFile(models.Model):
@@ -585,13 +617,23 @@ class AuthorityFile(models.Model):
 class Location(models.Model):
     """Handle the location information and toponyms within a manuscript"""
 
+    CODE_CHOICE = (("mp", "Map"), ("pm", "Poem"))
+
     id = models.AutoField(primary_key=True)
+    toponym_type = models.CharField(
+        blank=True,
+        null=True,
+        choices=CODE_CHOICE,
+        max_length=2,
+        help_text="The type will be automatically set based off the placename ID.",
+    )
     placename_id = models.CharField(
         blank=True, null=True, verbose_name="Placename ID", max_length=510
     )
-    # TODO: this could be more than one... eg this toponym shows up at 2.3.4 and 1.4.7
-    line_code = models.CharField(
-        blank=True, null=True, help_text="Citation line code.", max_length=510
+    line_code = models.ManyToManyField(
+        LineCode,
+        blank=True,
+        help_text="Citation line codes where the toponym appears.",
     )
     country = models.CharField(
         max_length=255, blank=True, null=True, verbose_name="Modern country"
@@ -642,6 +684,16 @@ class Location(models.Model):
                 logger.warning(
                     "Warning in geocoding a toponym: %s %s", str(e), str(self)
                 )
+
+    def save(self, *args, **kwargs):
+        # We attempt to automatically set the toponym type based on the code_id
+        if self.placename_id:
+            prefix = self.placename_id[0].upper()
+            if prefix == "M":
+                self.toponym_type = "mp"
+            elif prefix == "P":
+                self.toponym_type = "pm"
+        super(Location, self).save(*args, **kwargs)
 
 
 class LocationAlias(models.Model):

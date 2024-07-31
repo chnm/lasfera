@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Toponym - La Sfera{% endblock title %}
+
+{% block content %}
+    <div class="mx-auto container pt-3">
+        <h3 class="text-4xl pb-8 font-bold" id="text">
+            Manuscripts with the toponym <span class="border-b border-red-700 font-normal">{{ toponym }}</span>.
+        </h3>
+
+        <section id="manuscript" class="flex flex-col md:flex-row w-full p-4 my-10">
+            <div class="flex flex-col md:flex-row w-full p-2 gap-x-1">
+        {# Left column: display toponym details #}
+                <div class="w-full md:w-1/2 p-2">
+                    <p class="pb-2">&larr; <a class="underline hover:no-underline" href="{% url 'toponyms' %}">Return to gazetteer</a>.</p>
+                {# display the location aliases if any #}
+                    {% if aliases %}
+                        <div class="aliases mb-4">
+                            <h4>The toponym <strong><span class="border-b border-red-700">{{ toponym }}</span></strong> has the following aliases:</h4>
+                            <ul class="list-disc ml-4">
+                                {% for alias in aliases %}
+                                    {% for name in alias.placename_alias %}
+                                        <li>Additional alias: {{ name }}</li>
+                                    {% endfor %}
+                                    {% for name in alias.placename_modern %}
+                                        <li>Modern name: {{ name }}</li>
+                                    {% endfor %}
+                                    {% for name in alias.placename_standardized %}
+                                        <li>Standardized name: {{ name }}</li>
+                                    {% endfor %}
+                                    {% for name in alias.placename_from_mss %}
+                                        <li>Manuscript name: {{ name }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <p class="pb-2">There are no aliases associated with this toponym.</p>
+                    {% endif %}
+                    <p class="pt-2 pb-2">The following manuscripts contain the toponym <strong><span class="border-b border-red-700">{{ toponym }}</span></strong>:</p>
+                    <table class="table-auto">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2">ID</th>
+                                <th class="px-4 py-2">Siglum</th>
+                                <th class="px-4 py-2">Shelfmark</th>
+                                <th class="px-4 py-2">Library</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for manuscript in manuscripts %}
+                                <tr>
+                                    <td class="border px-4 py-2">{{ manuscript.item_id }}</td>
+                                    <td class="border px-4 py-2"><a class="underline hover:no-underline" href="/manuscripts/{{ manuscript.siglum }}">{{ manuscript.siglum }}</a></td>
+                                    <td class="border px-4 py-2">{{ manuscript.shelfmark }}</td>
+                                    <td class="border px-4 py-2">{{ manuscript.library }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td class="border px-4 py-2" colspan="4">No manuscripts available for this toponym.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div> {# end: left column #}
+
+        {# Right column #}
+                <div class="w-full md:w-1/2 p-2 flex flex-col">
+                {# Map content #}
+                    <div class="flex-auto mb-2">
+                        <div id="map" style="height: 200px; width: auto">Map of the location {{ toponym }}</div>
+                    </div>
+                {# IIIF content #}
+                    <div class="flex-auto">
+                        {% if iiif_manifest %}
+                            <div id="iiif-viewer" style="width: 100%; height: 600px; position: relative;"></div>
+                        {% else %}
+                            <h3 class="text-lg">No IIIF manifest provided.</h3>
+                        {% endif %}
+                    </div>
+                </div> {# end: right column #}
+            </div>
+        </section>
+    </div>
+{% endblock content %}
+
+{% block scripts %}
+    <script src="https://unpkg.com/mirador@latest/dist/mirador.min.js"></script>
+    <script>
+    // Replace '/api/toponyms/{id}/' with the actual path to your API endpoint
+    // Make sure to replace {id} with the actual ID of the toponym you want to fetch
+        fetch('/api/toponyms/{{ toponym.id }}')
+            .then(response => response.json())
+            .then(data => {
+                const latitude = data.latitude;
+                const longitude = data.longitude;
+
+            // Initialize the map on the "map" div with a given center and zoom
+                let map = L.map('map').setView([latitude, longitude], 6);
+
+            // Add an OpenStreetMap tile layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+                    maxZoom: 18,
+                }).addTo(map);
+
+            // Add a marker at the given location
+                let marker = L.marker([latitude, longitude]).addTo(map);
+            })
+            .catch(error => console.error('Error fetching toponym data:', error));
+
+        let iiif_manifest = "{{ iiif_manifest }}"; // This should come from your backend
+        let photograph = "{{ photograph }}"; // This should come from your backend
+
+        const manifestToUse = iiif_manifest ? iiif_manifest : photograph;
+
+        const mirador = Mirador.viewer({
+            "id": "iiif-viewer",
+            "manifests": {
+                [manifestToUse]: {}
+            },
+            "windows": [
+                {
+                    "loadedManifest": manifestToUse,
+                    "canvasIndex": 2,
+                    "thumbnailNavigationPosition": 'far-bottom'
+                }
+            ]
+        });
+    </script>
+{% endblock scripts %}

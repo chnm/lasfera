@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{# This page does two things: 
+    first is it creates a list of all toponyms; 
+    and it maps the location of toponyms if a lat/lon exists #}
+
+{% block content %}
+    <div class="mx-auto container pt-3">
+        <h3 class="text-4xl pb-8 font-bold">
+            Gazetteer Index
+        </h3>
+        <p class="text-base pb-2">This list is not comprehensive, and provides only a representative sample of the kinds of spelling variants found on Sfera maps. In particular, doubled letters (<strong>angolo </strong> >> <strong>angollo</strong>), <strong>c/ch </strong>and <strong>g/gh</strong> variants (>> <strong>angholo</strong>), and vowel variation (>> <strong>angelo</strong>) are so common that it is impossible to note all variations. Toponyms with few or no variants either (a) are so common as to acquire a standard spelling (e.g. <strong>asia</strong>) OR (b) do not often appear in the <em>Sfera</em> maps (e.g. <strong>livorno</strong>). This list expands abbreviations except in the case of labels such as <strong>f[iume]</strong> or <strong>m[are]</strong>, where variation is shown.</p>
+        <p class="text-base pb-2">You can learn more about the toponyms in one of two ways:</p>
+        <ol class="ml-4 list-decimal pt-2">
+            <li>You can select a toponym from the index list on the left. This list is filterable by fuzzy-matching search. Selecting a toponym will allow you to view more detailed information.</li>
+            <li>You can select a point or cluster on the map and view the associated toponym location. Selecting this will allow you to click on a toponym for more detailed information.</li>
+        </ul>
+
+        <section id="manuscript" class="flex flex-col md:flex-row w-full p-4 my-10">
+            <div class="flex flex-col md:flex-row w-full p-2 gap-x-4">
+            {# Left column #}
+                <div class="w-1/3 md:w-1/4 h-screen overflow-auto border p-3 m-3">
+                    <input name="q" type="text" placeholder="Filter toponyms..." class="p-2 border border-gray-300 rounded mt-4 mb-2 w-full" id="searchToponyms" hx-get="{% url 'search_toponyms' %}" hx-trigger="keyup changed delay:500ms" hx-target="#toponymsList">
+                    <hr class="border-gray-300">
+                    <div id="toponymsList">
+                        <ul>
+                            {% for toponym in toponyms %}
+                                <li class="p-2 hover:bg-gray-100">
+                                    <a class="underline hover:no-underline" href="{% url 'toponym_detail' toponym.id %}">{{ toponym.country }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+            {# Right column #}
+                <div class="w-2/3 md:w-3/4 h-screen" id="map"></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const map = L.map('map').setView([41.163, 28.766], 3);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+            maxZoom: 18,
+        }).addTo(map);
+
+    // Initialize the marker cluster group
+        const markers = L.markerClusterGroup();
+
+        fetch("/api/toponyms")
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(toponym => {
+                // If null, skip
+                    if (toponym.latitude === null || toponym.longitude === null) {
+                        return;
+                    }
+                    const marker = L.marker([toponym.latitude, toponym.longitude])
+                        .bindPopup(`<a href="/toponyms/${toponym.id}">${toponym.country}</a>`);
+                    markers.addLayer(marker); // Add marker to the cluster group
+                });
+                map.addLayer(markers);
+            });
+    </script>
+{% endblock %}

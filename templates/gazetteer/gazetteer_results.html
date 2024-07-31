@@ -1,0 +1,11 @@
+{% if toponyms %}
+    <ul>
+        {% for toponym in toponyms %}
+            <li class="p-2 hover:bg-gray-100">
+                <a class="underline hover:no-underline" href="{% url 'toponyms:toponym' toponym.id %}">{{ toponym.country }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-base">No toponyms found.</p>
+{% endif %}

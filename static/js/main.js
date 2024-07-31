@@ -34,11 +34,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const menuToggle = document.getElementById("menu-toggle");
   const menu = document.getElementById("menu");
 
-  menuToggle.addEventListener("click", function () {
-    if (menu.classList.contains("menu-hidden")) {
-      menu.classList.remove("menu-hidden");
-    } else {
-      menu.classList.add("menu-hidden");
-    }
-  });
+  if (menuToggle) {
+    menuToggle.addEventListener("click", function () {
+      if (menu.classList.contains("menu-hidden")) {
+        menu.classList.remove("menu-hidden");
+      } else {
+        menu.classList.add("menu-hidden");
+      }
+    });
+  }
 });

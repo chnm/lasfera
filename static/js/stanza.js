@@ -52,18 +52,23 @@ document.addEventListener("DOMContentLoaded", (event) => {
     let originalLineCodes = [];
 
     shortenLineCodes.addEventListener("click", function () {
-      const lineCodes = document.querySelectorAll(".line-code");
-      for (let i = 0; i < lineCodes.length; i++) {
-        if (this.checked) {
-          originalLineCodes[i] = lineCodes[i].textContent;
+      const lineCodeLinks = document.querySelectorAll(".line-code a");
 
-          let code = lineCodes[i].textContent;
+      for (let i = 0; i < lineCodeLinks.length; i++) {
+        const lineCodeSpan = lineCodeLinks[i].querySelector("span"); // Assuming the line code is in the first span within the link
+        if (this.checked) {
+          // Save the original line code
+          originalLineCodes[i] = lineCodeSpan.textContent;
+
+          // Shorten the line code
+          let code = lineCodeSpan.textContent;
           let parts = code.split(".");
           let lastPart = parts[parts.length - 1];
-          lineCodes[i].textContent = parseInt(lastPart);
+          lineCodeSpan.textContent = parseInt(lastPart);
         } else {
+          // Restore the original line code
           if (originalLineCodes.length) {
-            lineCodes[i].textContent = originalLineCodes[i];
+            lineCodeSpan.textContent = originalLineCodes[i];
           }
         }
       }

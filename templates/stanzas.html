@@ -51,8 +51,12 @@
                 <div id="stanza-{{stanza_number}}" class="mb-6">
                   {% for stanza in stanzas %}
                     <div>
-                      <span class="line-code font-serif text-red-700 text-sm mr-2">
-                        {{ stanza.stanza_line_code_starts }}
+                      <span class="line-code">
+                        <a class="no-underline" href="#{{stanza.stanza_line_code_starts}}" id="{{stanza.stanza_line_code_starts}}">
+                          <span class="font-serif text-red-700 text-sm mr-2">
+                            {{ stanza.stanza_line_code_starts }}
+                          </span>
+                        </a>
               <!-- anchor to line codes -->
               <!-- linking to the folio in the manuscript to the stanza; hyperlink the line code? display only lin enumber for the code -->
               <!-- mirador viewer switches to the correct location? -->
