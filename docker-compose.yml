@@ -1,9 +1,9 @@
-version: "3.9"
+name: lasfera
+
 services:
   app:
     build: .
     image: "rrchnm/lasfera"
-    container_name: "lasfera-app"
     ports:
       - "8000:8000"
     environment:
@@ -28,7 +28,6 @@ services:
       - .:/app
   db:
     image: postgres:16
-    container_name: "lasfera-db"
     volumes:
       - pg-data:/var/lib/postgresql/data/
     environment:
