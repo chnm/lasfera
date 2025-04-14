@@ -26,6 +26,7 @@ jobs:
   deploy:
     uses: chnm/.github/.github/workflows/django--deploy.yml@main
     needs: [build-publish]
+    if: github.ref == 'refs/heads/main'
     secrets: inherit
     with:
       website-devl-fqdn: "dev.lasfera.rrchnm.org"
