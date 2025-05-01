@@ -28,6 +28,6 @@
   },
   "homepage": "https://github.com/chnm/lasfera#readme",
   "dependencies": {
-    "mirador": "^4.0.0-alpha.2"
+    "mirador": "^4.0.0-alpha.16"
   }
 }
