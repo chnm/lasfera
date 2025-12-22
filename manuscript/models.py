@@ -2,13 +2,12 @@ import logging
 import re
 from typing import List, Tuple
 
-from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils.text import slugify
 from prose.fields import RichTextField
 
 from manuscript.utils import get_canvas_id_for_folio
@@ -531,7 +530,7 @@ class Stanza(models.Model):
             existing_stanzas = Stanza.objects.filter(
                 stanza_line_code_starts__startswith=line_code
             )
-            variant_code = line_code + chr(ord("a") + existing_stanza.count())
+            variant_code = line_code + chr(ord("a") + existing_stanzas.count())
 
             try:
                 self.stanza = Stanza.objects.get(stanza_line_code_starts=variant_code)
