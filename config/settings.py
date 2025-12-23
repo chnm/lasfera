@@ -19,7 +19,8 @@ env = environ.FileAwareEnv(
 # ------------------------------------------------------------------------------
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG", default="False")
+DEBUG = env.bool("DEBUG", default=False)
+SQL_DEBUG = env.bool("SQL_DEBUG", default=False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env(
@@ -166,6 +167,11 @@ LOGGING = {
         "": {
             "handlers": ["console"],
             "level": "DEBUG",
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "DEBUG" if SQL_DEBUG else "INFO",
+            "propagate": False,
         },
     },
 }
