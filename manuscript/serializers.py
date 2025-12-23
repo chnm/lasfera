@@ -5,14 +5,10 @@ from manuscript.models import Location, LocationAlias, SingleManuscript
 
 class ToponymSerializer(serializers.ModelSerializer):
     aliases = serializers.SerializerMethodField()
-    slug = serializers.SerializerMethodField()
 
     class Meta:
         model = Location
         fields = ["id", "name", "slug", "modern_country", "latitude", "longitude", "aliases"]
-
-    def get_slug(self, obj):
-        return obj.get_slug()
 
     def get_aliases(self, obj):
         aliases = (

@@ -7,6 +7,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.text import slugify
 from prose.fields import RichTextField
 
@@ -869,7 +870,8 @@ class Location(models.Model):
                 self.toponym_type = "pm"
         super(Location, self).save(*args, **kwargs)
 
-    def get_slug(self):
+    @property
+    def slug(self):
         """Get the slug for this toponym, with fallback"""
         if not self.name or not self.name.strip():
             # Fallback options if name is empty
@@ -881,9 +883,7 @@ class Location(models.Model):
 
     def get_absolute_url(self):
         """Return the URL for this toponym using the slug with fallback"""
-        from django.urls import reverse
-
-        slug = self.get_slug()
+        slug = self.slug
         if not slug:
             # If we still couldn't generate a slug, use the ID-based URL
             return reverse("toponym_by_id", kwargs={"placename_id": self.placename_id})
