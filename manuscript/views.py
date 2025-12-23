@@ -11,7 +11,7 @@ import requests
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.text import slugify
@@ -920,33 +920,16 @@ def toponyms(request: HttpRequest):
     """View for displaying all toponyms with proper slugs"""
     # Get unique and sorted Location objects
     toponym_objects = (
-        Location.objects.exclude(placename_id=None)
+        Location.objects.exclude(placename_id__isnull=True)
         .exclude(placename_id="")
-        .exclude(
-            Q(name="") | Q(name__isnull=True)
-        )  # Exclude locations with empty names
-        .values("name", "placename_id", "id")
-        .distinct()
+        .exclude(name__isnull=True)
+        .exclude(name="")
         .order_by("name")
+        .distinct("name", "placename_id")
     )
 
-    # Add slug to each object and ensure it's not empty
-    toponyms_with_slugs = []
-    for obj in toponym_objects:
-        if obj["name"]:  # Double check name is not empty
-            slug = slugify(obj["name"])
-            if not slug:
-                # Generate a fallback slug
-                if obj["placename_id"]:
-                    slug = slugify(obj["placename_id"])
-                else:
-                    slug = f"toponym-{obj['id']}"
-
-            obj["slug"] = slug
-            toponyms_with_slugs.append(obj)
-
     return render(
-        request, "gazetteer/gazetteer_index.html", {"aliases": toponyms_with_slugs}
+        request, "gazetteer/gazetteer_index.html", {"locations": toponym_objects}
     )
 
 
@@ -1036,25 +1019,31 @@ def toponym(request: HttpRequest, placename_id: str):
 
 
 def search_toponyms(request):
-    query = request.GET.get("q", "")
-    try:
-        if query:
-            alias_results = LocationAlias.objects.filter(
-                Q(placename_modern__icontains=query)
-                | Q(placename_ancient__icontains=query)
-                | Q(placename_from_mss__icontains=query)
-                | Q(
-                    location__name__icontains=query
-                )  # Follow the relationship to Location's name field
-            ).distinct()
-        else:
-            alias_results = LocationAlias.objects.all()
-        return render(
-            request, "gazetteer/gazetteer_results.html", {"aliases": alias_results}
+    """Given a search qury, return Location objects, based on
+    Location name and associated LocationAlias placenames."""
+    query = request.GET.get("q", "").strip()
+    locations = Location.objects.all()
+    if query:
+        # use subquery with EXISTS on LocationAlias names for efficiency (no JOIN)
+        alias_subquery = LocationAlias.objects.filter(
+            # ensure we only return related Locations
+            location=OuterRef("pk")
+        ).filter(
+            Q(placename_modern__icontains=query)
+            | Q(placename_ancient__icontains=query)
+            | Q(placename_from_mss__icontains=query)
+            | Q(placename_alias__icontains=query)
         )
-    except Exception as e:
-        logger.error("Error in search_toponyms: %s", e)
-        return JsonResponse({"error": str(e)}, status=500)
+        locations = locations.filter(
+            Q(name__icontains=query) | Exists(alias_subquery)
+        )
+
+    # sort so it matches "all locations" queryset
+    locations = locations.order_by("name")
+
+    return render(
+        request, "gazetteer/gazetteer_results.html", {"locations": locations}
+    )
 
 
 class ToponymViewSet(viewsets.ReadOnlyModelViewSet):
