@@ -14,6 +14,7 @@ from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.templatetags.static import static
 from django.utils.text import slugify
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
@@ -393,7 +394,7 @@ def index(request: HttpRequest):
             if os.path.isfile(os.path.join(static_dir, f))
         ]
         for image in images:
-            image_urls.append(os.path.join(settings.STATIC_URL, image_directory, image))
+            image_urls.append(static(f"images/home/{image}"))
 
     # Shuffle the image URLs to simulate randomness
     random.shuffle(image_urls)
@@ -405,27 +406,27 @@ def index(request: HttpRequest):
             {
                 "name": "Edition",
                 "url": "/manuscripts/Urb1/stanzas/",
-                "thumbnail": "/static/images/home/wellcome230_p44.webp",
+                "thumbnail": static("images/home/wellcome230_p44.webp"),
             },
             {
                 "name": "Gazetteer",
                 "url": "/toponyms",
-                "thumbnail": "/static/images/home/bncf_csopp2618_m1b.webp",
+                "thumbnail": static("images/home/bncf_csopp2618_m1b.webp"),
             },
             {
                 "name": "Resources",
                 "url": "#",
-                "thumbnail": "/static/images/home/basel_cl194_p59.webp",
+                "thumbnail": static("images/home/basel_cl194_p59.webp"),
             },
             {
                 "name": "Gallery",
                 "url": "/pages/gallery/",
-                "thumbnail": "/static/images/home/nypl_f1v_ship.webp",
+                "thumbnail": static("images/home/nypl_f1v_ship.webp"),
             },
             {
                 "name": "About",
                 "url": "/about/",
-                "thumbnail": "/static/images/home/oxford74_jerusalem.webp",
+                "thumbnail": static("images/home/oxford74_jerusalem.webp"),
             },
         ],
     }
