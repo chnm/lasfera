@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import requests
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.staticfiles import finders
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
@@ -377,20 +378,11 @@ def index(request: HttpRequest):
 
     # Prefetch image URLs
     image_directory = "images/home/"
-    static_dir = os.path.join(settings.STATIC_ROOT, image_directory)
-    if not os.path.exists(static_dir):
-        static_dir = None
-        for static_dir_path in settings.STATICFILES_DIRS:
-            potential_dir = os.path.join(static_dir_path, image_directory)
-            if os.path.exists(potential_dir):
-                static_dir = potential_dir
-                break
-
     image_urls = []
-    if static_dir:
+    static_dir = finders.find(image_directory)
+    if static_dir and os.path.exists(static_dir):
         images = [
-            f
-            for f in os.listdir(static_dir)
+            f for f in os.listdir(static_dir) 
             if os.path.isfile(os.path.join(static_dir, f))
         ]
         for image in images:
