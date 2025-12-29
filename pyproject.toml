@@ -33,6 +33,7 @@ wagtail = "^6.2.1"
 django-ckeditor = "^6.7.1"
 gunicorn = "^22.0.0"
 dj-database-url = "^3.0.1"
+whitenoise = "^6.11.0"
 
 [tool.poetry.group.development.dependencies]
 django-tailwind = {extras = ["reload"], version = "^3.8.0"}
