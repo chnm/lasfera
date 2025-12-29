@@ -969,9 +969,9 @@ def toponym(request: HttpRequest, placename_id: str):
     }
 
     # First get aliases with related data
-    aliases = filtered_toponym.locationalias_set.all().prefetch_related(
-        "manuscripts", "folios"
-    )
+    aliases = filtered_toponym.locationalias_set.filter(
+        show_on_page=True
+    ).prefetch_related("manuscripts", "folios")
 
     # Then process aggregations
     aggregated_aliases = {

@@ -344,6 +344,7 @@ class LocationAliasAdmin(ImportExportModelAdmin):
     list_display = (
         "location",
         "placename_alias",
+        "show_on_page",
         "placename_from_mss",
         "placename_ancient",
         "placename_standardized",
