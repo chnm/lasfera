@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
 
+import dj_database_url
 import environ
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -8,12 +10,11 @@ READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
     env.read_env(str(BASE_DIR / ".env"))
-
+IS_HEROKU_APP = "DYNO" in os.environ and "CI" not in os.environ
 
 env = environ.FileAwareEnv(
     DEBUG=(bool, False),
 )
-
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -125,17 +126,31 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": env("DB_HOST", default="localhost"),
-        "PORT": env("DB_PORT", default="5432"),
-        "NAME": env("DB_NAME", default="lasfera"),
-        "USER": env("DB_USER", default="lasfera"),
-        "PASSWORD": env("DB_PASS", default="password"),
+if IS_HEROKU_APP:
+    # In production on Heroku the database configuration is derived from the `DATABASE_URL`
+    # environment variable by the dj-database-url package. `DATABASE_URL` will be set
+    # automatically by Heroku when a database addon is attached to your Heroku app. See:
+    # https://devcenter.heroku.com/articles/provisioning-heroku-postgres#application-config-vars
+    # https://github.com/jazzband/dj-database-url
+    DATABASES = {
+        "default": dj_database_url.config(
+            env="DATABASE_URL",
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        ),
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "HOST": env("DB_HOST", default="localhost"),
+            "PORT": env("DB_PORT", default="5432"),
+            "NAME": env("DB_NAME", default="lasfera"),
+            "USER": env("DB_USER", default="lasfera"),
+            "PASSWORD": env("DB_PASS", default="password"),
+        }
+    }
 
 
 # Password validation
