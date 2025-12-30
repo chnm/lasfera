@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
-    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     "rest_framework",
     "fontawesomefree",
@@ -222,20 +221,39 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    # Enable WhiteNoise's GZip (and Brotli, if installed) compression of static assets:
-    # https://whitenoise.readthedocs.io/en/latest/django.html#add-compression-and-caching-support
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-WHITENOISE_KEEP_ONLY_HASHED_FILES = True
+
+if IS_HEROKU_APP:
+    # use s3 storage to prevent uploads to heroku ephemeral storage
+    AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default="us-east-1")
+    AWS_QUERYSTRING_AUTH = False 
+    AWS_S3_FILE_OVERWRITE = False
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        # Enable WhiteNoise's GZip (and Brotli, if installed) compression of static assets:
+        # https://whitenoise.readthedocs.io/en/latest/django.html#add-compression-and-caching-support
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
+    WHITENOISE_KEEP_ONLY_HASHED_FILES = True
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    MEDIA_URL = "/media/"
 
 MEDIA_ROOT = str(BASE_DIR / "media")
-MEDIA_URL = "/media/"
 
 ADMINS = [
     ("Jason Heppler", "jheppler@gmu.edu"),
