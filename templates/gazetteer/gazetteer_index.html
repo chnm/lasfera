@@ -34,14 +34,7 @@
                         <input name="q" type="text" placeholder="Search toponyms..." class="p-2 border border-gray-300 rounded mt-4 mb-2 w-full" id="searchToponyms" hx-get="{% url 'search_toponyms' %}" hx-trigger="keyup changed delay:500ms" hx-target="#toponymsList">
                         <hr class="border-gray-300">
                         <div id="toponymsList">
-                            <ul>
-                                {% for alias in aliases %}
-                                    <li class="p-2 hover:bg-gray-100" data-location-id="{{ alias.id }}">
-                                        <a class="underline hover:no-underline" href="{% url 'toponym_detail' alias.slug %}">{{ alias.name }}</a>
-
-                                    </li>
-                                {% endfor %}
-                            </ul>
+                            {% include "partials/toponyms_list.html" with locations=locations %}
                         </div>
                     </div>
         {# Right column #}
@@ -79,7 +72,15 @@
                                 fillColor: '#B91C1C',
                                 fillOpacity: 0.6,
                                 className: `marker-${toponym.id}` // Add class for easy selection
-                            }).bindPopup(`Placename from manuscript:<br/> <a style="text-decoration: underline" href="/toponyms/${toponym.placename_id}">${ms_alias || 'No name available'}${modern_alias ? ` (${modern_alias})` : ''}</a>`);
+                            }).bindPopup(
+                                `<a style="text-decoration: underline" href="/toponyms/${toponym.slug}">${
+                                    toponym.name ||
+                                    ms_alias ||
+                                    (modern_alias
+                                        ? `No name available (${modern_alias})`
+                                        : 'No name available')
+                                }</a>`
+                            );
 
                 // Store marker reference
                             markersByLocationId.set(toponym.id, circleMarker);
