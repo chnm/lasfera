@@ -118,6 +118,7 @@ class CodexInline(admin.StackedInline):
 class LocationAliasInline(admin.TabularInline):
     model = LocationAlias
     extra = 1
+    autocomplete_fields = ("manuscripts", "folios")
 
 
 class AuthorityFileInline(admin.TabularInline):
@@ -321,13 +322,18 @@ class LocationAdmin(ImportExportModelAdmin):
     get_related_folios.short_description = "Related folio"
 
     def get_placename_modern(self, obj):
-        alias = LocationAlias.objects.filter(location=obj).first()
+        # use prefetched LocationAlias set
+        alias = (
+            obj.locationalias_set.all()[0] if obj.locationalias_set.exists() else None
+        )
         return alias.placename_modern if alias else None
 
     get_placename_modern.short_description = "Modern Placename"
 
     def get_mss_placename(self, obj):
-        alias = LocationAlias.objects.filter(location=obj).first()
+        alias = (
+            obj.locationalias_set.all()[0] if obj.locationalias_set.exists() else None
+        )
         return alias.placename_from_mss if alias else None
 
     get_mss_placename.short_description = "Manuscript Placename"
@@ -336,6 +342,15 @@ class LocationAdmin(ImportExportModelAdmin):
         super().save_related(request, form, formsets, change)
         instance = form.instance
         instance.geocode()
+
+    def get_queryset(self, request):
+        # prefetch folio_set for get_related_folios,
+        # locationalias_set for the modern/mss placename methods
+        return (
+            super()
+            .get_queryset(request)
+            .prefetch_related("folio_set", "locationalias_set")
+        )
 
 
 @admin.register(LocationAlias)
@@ -416,7 +431,9 @@ class LineCodeAdmin(ImportExportModelAdmin):
     filter_horizontal = ("associated_toponyms",)
 
     def get_toponyms(self, obj):
-        return ", ".join([toponym.placename_id for toponym in obj.associated_toponyms.all()])
+        return ", ".join(
+            [toponym.placename_id for toponym in obj.associated_toponyms.all()]
+        )
 
     def get_folio(self, obj):
         if obj.associated_folio:
