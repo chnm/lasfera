@@ -922,6 +922,10 @@ class LocationAlias(models.Model):
         verbose_name="Additional aliases",
         help_text="Additional aliases for the placename.",
     )
+    show_on_page = models.BooleanField(
+        default=False,
+        help_text="Show this alias as a variant on the toponym page."
+    )
     placename_ancient = models.CharField(
         max_length=255,
         blank=True,
