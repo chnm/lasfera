@@ -3,6 +3,17 @@
 
 {% block title %}Data on toponym {{ aggregated_aliases.name }} - La Sfera{% endblock title %}
 
+{% block extra_css %}
+    <style>
+        .description a {
+            text-decoration-line: underline;
+        }
+        .description a:hover {
+            text-decoration-line: none;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
     <div class="mx-auto container p-4 m-4">
         <p class="pb-2">&larr; <a class="underline hover:no-underline" href="{% url 'toponyms' %}">Return to gazetteer</a></p>
@@ -16,7 +27,7 @@
                 <div class="lg:w-1/2">
                     {# description #}
                     {% if toponym.description %}
-                        <div class="py-4">
+                        <div class="description py-4">
                             {{ toponym.description|safe }}
                         </div>
                     {% endif %}
