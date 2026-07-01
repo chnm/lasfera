@@ -1,5 +1,7 @@
 # La Sfera
 
+⚠️ Project development moved to Performant: [lasfera](https://github.com/performant-software/lasfera).
+
 A Django-based digital humanities application for analyzing and presenting manuscript variations of historical texts, developed by the [Roy Rosenzweig Center for History and New Media](https://rrchnm.org).
 
 ## Features
